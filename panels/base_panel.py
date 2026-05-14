@@ -10,6 +10,9 @@ from datetime import datetime
 from math import log
 from ks_includes.screen_panel import ScreenPanel
 
+#IP
+from ks_includes.sdbus_nm import SdbusNm
+
 try:
     import psutil
     psutil_available = True
@@ -21,6 +24,7 @@ except ImportError:
 class BasePanel(ScreenPanel):
     def __init__(self, screen, title=None):
         super().__init__(screen, title)
+        self.ip = " "
         self.current_panel = None
         self.time_min = -1
         self.time_format = self._config.get_main_config().getboolean("24htime", True)
@@ -30,6 +34,13 @@ class BasePanel(ScreenPanel):
         self.current_extruder = None
         self.last_usage_report = datetime.now()
         self.usage_report = 0
+
+        #IP
+        try:
+           self.sdbus_nm = SdbusNm(self.popup_callback)
+        except Exception as e:
+           self.sdbus_nm = None
+
         # Action bar buttons
         self.abscale = self.bts * 1.1
         self.control['back'] = self._gtk.Button('back', scale=self.abscale)
@@ -92,12 +103,30 @@ class BasePanel(ScreenPanel):
         self.control['time_box'] = Gtk.Box(halign=Gtk.Align.END)
         self.control['time_box'].pack_end(self.control['time'], True, True, 10)
 
+        # IP
+        if (self.sdbus_nm != None):
+            if (self.ip == " "):
+                self.interface = self.sdbus_nm.get_primary_interface()
+                out = f"{self.sdbus_nm.get_ip_address()}"
+                if ("(eth0)" in out):
+                    out = "Ethernet IP: "+ out.strip(" (eth0)")
+                else:
+                    out = "Wifi IP: "+ out
+                self.ip = out        
+            else:
+                self.ip =(f"Aquiring IP")
+
+        self.control['ip_box'] = Gtk.Box()
+        self.control['ip_box'].set_halign(Gtk.Align.END)
+        self.control['ip'] = Gtk.Label(label=self.ip)
+        self.control['ip_box'].pack_end(self.control['ip'], True, True, 10)
 
         self.titlebar = Gtk.Box(spacing=5, valign=Gtk.Align.CENTER)
         self.titlebar.get_style_context().add_class("title_bar")
         self.titlebar.add(self.control['temp_box'])
         self.titlebar.add(self.titlelbl)
-        self.titlebar.add(self.control['time_box'])
+        self.titlebar.add(self.control['ip_box'])
+        #self.titlebar.add(self.control['time_box'])
         self.set_title(title)
 
         # Main layout
@@ -115,6 +144,9 @@ class BasePanel(ScreenPanel):
             self.main_grid.attach(self.content, 1, 1, 1, 1)
 
         self.update_time()
+
+    def popup_callback(self, msg, level=3):
+        self._screen.show_popup_message(msg, level)
 
     def reload_icons(self):
         button: Gtk.Button
@@ -203,7 +235,8 @@ class BasePanel(ScreenPanel):
 
     def activate(self):
         if self.time_update is None:
-            self.time_update = GLib.timeout_add_seconds(1, self.update_time)
+            #self.time_update = GLib.timeout_add_seconds(1, self.update_time)
+            self.time_update = GLib.timeout_add_seconds(5, self.update_ip)
 
     def add_content(self, panel):
         printing = self._printer and self._printer.state in {"printing", "paused"}
@@ -398,3 +431,36 @@ class BasePanel(ScreenPanel):
             self._screen.dialogs.remove(self.update_dialog)
         self.update_dialog = None
         self._screen._menu_go_back(home=True)
+
+    def get_ip(self):
+        # borrowed from network.py
+        #gws = netifaces.gateways()
+        #if "default" in gws and netifaces.AF_INET in gws["default"]:
+        #    self.interface = gws["default"][netifaces.AF_INET][1]
+        #else:
+        #    ints = netifaces.interfaces()
+        #    if 'lo' in ints:
+        #        ints.pop(ints.index('lo'))
+        #    if len(ints) > 0:
+        #        self.interface = ints[0]
+        #    else:
+        #        self.interface = 'lo'
+        #res = netifaces.ifaddresses(self.interface)
+        #if netifaces.AF_INET in res and len(res[netifaces.AF_INET]) > 0:
+        #    ip = res[netifaces.AF_INET][0]['addr']
+        #else:
+        #    ip = "Offline"
+        #return ip
+        return True
+
+    def update_ip(self):
+        #self.ip = self.get_ip()
+        #self.control['ip'].set_text(self.ip)
+        #return True
+
+        try:
+            self.sdbus_nm = SdbusNm(self.popup_callback)
+        except Exception as e:
+            self.sdbus_nm = None
+
+        return True
