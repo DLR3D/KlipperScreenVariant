@@ -51,7 +51,7 @@ class BasePanel(ScreenPanel):
             self.set_control_sensitive(False, control)
         self.control['estop'] = self._gtk.Button('emergency', scale=self.abscale)
         self.control['estop'].connect("clicked", self.emergency_stop)
-        self.control['estop'].set_no_show_all(True)
+        #self.control['estop'].set_no_show_all(True)
         self.shutdown = {
             "panel": "shutdown",
         }
@@ -75,21 +75,27 @@ class BasePanel(ScreenPanel):
             self.control[item].connect("clicked", self._screen.remove_keyboard)
 
         # Action bar
-        self.action_bar = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=5)
+        self.action_bar = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=300)
         if self._screen.vertical_mode:
             self.action_bar.set_hexpand(True)
             self.action_bar.set_vexpand(False)
         else:
             self.action_bar.set_hexpand(False)
             self.action_bar.set_vexpand(True)
+#
+        #self.action_bar.set_vexpand(False)
         self.action_bar.get_style_context().add_class('action_bar')
-        self.action_bar.set_size_request(self._gtk.action_bar_width, self._gtk.action_bar_height)
-        self.action_bar.add(self.control['back'])
-        self.action_bar.add(self.control['home'])
-        self.action_bar.add(self.control['printer_select'])
-        self.action_bar.add(self.control['shortcut'])
+        self.action_bar.set_size_request(self._gtk.action_bar_width/1.6, self._gtk.action_bar_height)
         self.action_bar.add(self.control['estop'])
-        self.action_bar.add(self.control['shutdown'])
+        self.action_bar.add(self.control['back'])
+        #self.action_bar.add(self.control['home'])
+        #self.action_bar.add(self.control['printer_select'])
+        #self.action_bar.add(self.control['shortcut'])
+        
+        #self.action_bar.add(self.control['shutdown'])
+
+
+
         self.show_printer_select(len(self._config.get_printers()) > 1)
 
         # Titlebar
@@ -104,17 +110,7 @@ class BasePanel(ScreenPanel):
         self.control['time_box'].pack_end(self.control['time'], True, True, 10)
 
         # IP
-        if (self.sdbus_nm != None):
-            if (self.ip == " "):
-                self.interface = self.sdbus_nm.get_primary_interface()
-                out = f"{self.sdbus_nm.get_ip_address()}"
-                if ("(eth0)" in out):
-                    out = "Ethernet IP: "+ out.strip(" (eth0)")
-                else:
-                    out = "Wifi IP: "+ out
-                self.ip = out        
-            else:
-                self.ip =(f"Aquiring IP")
+        self.update_ip()
 
         self.control['ip_box'] = Gtk.Box()
         self.control['ip_box'].set_halign(Gtk.Align.END)
@@ -138,10 +134,10 @@ class BasePanel(ScreenPanel):
             self.main_grid.attach(self.action_bar, 0, 2, 1, 1)
             self.action_bar.set_orientation(orientation=Gtk.Orientation.HORIZONTAL)
         else:
-            self.main_grid.attach(self.action_bar, 0, 0, 1, 2)
+            self.main_grid.attach(self.action_bar, 1, 0, 1, 2)
             self.action_bar.set_orientation(orientation=Gtk.Orientation.VERTICAL)
-            self.main_grid.attach(self.titlebar, 1, 0, 1, 1)
-            self.main_grid.attach(self.content, 1, 1, 1, 1)
+            self.main_grid.attach(self.titlebar, 0, 0, 1, 1)
+            self.main_grid.attach(self.content, 0, 1, 1, 1)
 
         self.update_time()
 
@@ -198,6 +194,9 @@ class BasePanel(ScreenPanel):
                 elif device.startswith("heater"):
                     self.control['temp_box'].add(self.labels[f"{device}_box"])
                     n += 1
+                elif device.startswith("temperature_sensor"):
+                    self.control['temp_box'].add(self.labels[f"{device}_box"])
+                    n += 1
             for device in devices:
                 # Users can fill the bar if they want
                 if n >= nlimit + 1:
@@ -227,7 +226,10 @@ class BasePanel(ScreenPanel):
             # The item has a name, do not use an icon
             return None
         elif device.startswith("temperature_fan"):
-            return self._gtk.Image("fan", img_size, img_size)
+            # Changed to temperature fan shows as chamber
+            return self._gtk.Image("printer", img_size, img_size)
+        elif device.startswith("temperature_sensor"):
+            return self._gtk.Image("printer", img_size, img_size)
         elif device.startswith("heater_generic"):
             return self._gtk.Image("heater", img_size, img_size)
         else:
@@ -432,27 +434,6 @@ class BasePanel(ScreenPanel):
         self.update_dialog = None
         self._screen._menu_go_back(home=True)
 
-    def get_ip(self):
-        # borrowed from network.py
-        #gws = netifaces.gateways()
-        #if "default" in gws and netifaces.AF_INET in gws["default"]:
-        #    self.interface = gws["default"][netifaces.AF_INET][1]
-        #else:
-        #    ints = netifaces.interfaces()
-        #    if 'lo' in ints:
-        #        ints.pop(ints.index('lo'))
-        #    if len(ints) > 0:
-        #        self.interface = ints[0]
-        #    else:
-        #        self.interface = 'lo'
-        #res = netifaces.ifaddresses(self.interface)
-        #if netifaces.AF_INET in res and len(res[netifaces.AF_INET]) > 0:
-        #    ip = res[netifaces.AF_INET][0]['addr']
-        #else:
-        #    ip = "Offline"
-        #return ip
-        return True
-
     def update_ip(self):
         #self.ip = self.get_ip()
         #self.control['ip'].set_text(self.ip)
@@ -462,5 +443,17 @@ class BasePanel(ScreenPanel):
             self.sdbus_nm = SdbusNm(self.popup_callback)
         except Exception as e:
             self.sdbus_nm = None
+
+        if (self.sdbus_nm != None):
+            if (self.ip == " "):
+                self.interface = self.sdbus_nm.get_primary_interface()
+                out = f"{self.sdbus_nm.get_ip_address()}"
+                if ("(eth0)" in out):
+                    out = "Ethernet IP: "+ out.strip(" (eth0)")
+                else:
+                    out = "Wifi IP: "+ out
+                self.ip = out        
+            else:
+                self.ip =(f"Aquiring IP")
 
         return True
