@@ -28,10 +28,10 @@ class Panel(MenuPanel):
 
         # Build new top row live extruder temp, bed temp, and fan buttons.  Buttons are defined here
         # rather than in create_top_panel so they can be seen by the update routine
-        self.ext_temp = self._gtk.Button('extruder', "°C", "color1", self.bts * 1.5, Gtk.PositionType.LEFT, 1)
-        self.bed_temp = self._gtk.Button('bed', "°C", "color2", self.bts * 1.3, Gtk.PositionType.LEFT, 1)
-        self.chamber_temp = self._gtk.Button('printer', "°C", "color3", self.bts * 1.5, Gtk.PositionType.LEFT, 1)
-        self.fan_spd = self._gtk.Button('fan', "%", "color4", self.bts * 1.5, Gtk.PositionType.LEFT, 1)
+        self.ext_temp = self._gtk.Button('extruder', "°C", "colorless", self.bts * 1.5, Gtk.PositionType.LEFT, 1)
+        self.bed_temp = self._gtk.Button('bed', "°C", "colorless", self.bts * 1.3, Gtk.PositionType.LEFT, 1)
+        self.chamber_temp = self._gtk.Button('printer', "°C", "colorless", self.bts * 1.5, Gtk.PositionType.LEFT, 1)
+        self.fan_spd = self._gtk.Button('fan', "%", "colorless", self.bts * 1.5, Gtk.PositionType.LEFT, 1)
         self.top_panel = self.create_top_panel()
         self.main_menu.attach(self.top_panel, 0, 0, 4, 1)
 
@@ -43,22 +43,15 @@ class Panel(MenuPanel):
 
     def create_top_panel(self):
         # Buttons are defined in the init so they can be seen by the update routine
-        self.ext_temp.connect("clicked", self.menu_item_clicked, {"name": "Temperature", "panel": "temperature"})
-        self.bed_temp.connect("clicked", self.menu_item_clicked, {"name": "Temperature", "panel": "temperature"})
-        self.chamber_temp.connect("clicked", self.menu_item_clicked, {"name": "Temperature", "panel": "temperature"})
-        self.fan_spd.connect("clicked", self.menu_item_clicked, {"name": "Fan", "panel": "fan"})
+        self.ext_temp.connect("clicked", self.show_numpad, "ext")
+        self.bed_temp.connect("clicked", self.show_numpad, "bed")
+        #self.chamber_temp.connect("clicked", self.menu_item_clicked, {"name": "Temperature", "panel": "temperature"})
+        self.fan_spd.connect("clicked", self.show_numpad, "fan")
 
-        self.ext_temp.get_style_context().add_class("buttons_main_top")
-        self.ext_temp.get_style_context().add_class("main_temp_off")
-
-        self.bed_temp.get_style_context().add_class("buttons_main_top")
-        self.bed_temp.get_style_context().add_class("main_temp_off")
-
-        self.chamber_temp.get_style_context().add_class("buttons_main_top")
-        self.chamber_temp.get_style_context().add_class("main_temp_off")
-
-        self.fan_spd.get_style_context().add_class("buttons_main_top")
-        self.fan_spd.get_style_context().add_class("main_temp_off")
+        self.ext_temp.get_style_context().add_class("temp_off")
+        self.bed_temp.get_style_context().add_class("temp_off")
+        self.chamber_temp.get_style_context().add_class("temp_off")
+        self.fan_spd.get_style_context().add_class("temp_off")
 
         top = Gtk.Grid(row_homogeneous=True, column_homogeneous=True)
         top.set_property("height-request", 80)
@@ -71,42 +64,46 @@ class Panel(MenuPanel):
 
         return top
 
+    def set_heating_color(self,button,heating):
+        if heating >0:
+            button.get_style_context().remove_class("temp_off")
+            button.get_style_context().add_class("temp_on")
+        else:
+            button.get_style_context().remove_class("temp_on")
+            button.get_style_context().add_class("temp_off")
+
+    def set_active(self,button,active):
+        if active :
+            button.get_style_context().remove_class("temp_on")
+            button.get_style_context().remove_class("temp_off")
+            button.get_style_context().add_class("select")
+        else:
+            button.get_style_context().remove_class("temp_on")
+            button.get_style_context().add_class("temp_off")
+            button.get_style_context().remove_class("select")
+
     def update_top_panel(self):
         ext_temp = self._printer.get_stat("extruder", "temperature")
         ext_target = self._printer.get_stat("extruder", "target")
-        ext_label = f"{int(ext_temp)} / {int(ext_target)}°C"
+        ext_label = f"{int(round(ext_temp))} / {int(round(ext_target))}°C"
 
         bed_temp = self._printer.get_stat("heater_bed", "temperature")
         bed_target = self._printer.get_stat("heater_bed", "target")
-        bed_label = f" {int(bed_temp)} / {int(bed_target)}°C"
+        bed_label = f" {int(round(bed_temp))} / {int(round(bed_target))}°C"
 
-        chamber_temp = self._printer.get_stat("temperature_sensor Chamber", "temperature")
-        chamber_label = f" {int(chamber_temp)} °C"
+        try:
+            chamber_temp = self._printer.get_stat("temperature_sensor Chamber", "temperature")
+            chamber_label = f" {int(round(chamber_temp))} °C"
+        except:
+            chamber_temp = self._printer.get_stat("temperature_fan  Chamber", "temperature")
+            chamber_label = f" {int(round(chamber_temp))} °C"
 
         fs = self._printer.get_fan_speed("fan")
         fan_label = f" {float(fs) * 100:.0f}%"
 
-        if ext_target > 0:
-            self.ext_temp.get_style_context().remove_class("main_temp_off")
-            self.ext_temp.get_style_context().add_class("main_temp_on")
-        else:
-            self.ext_temp.get_style_context().remove_class("main_temp_on")
-            self.ext_temp.get_style_context().add_class("main_temp_off")
-
-        if bed_target > 0:
-            self.bed_temp.get_style_context().remove_class("main_temp_off")
-            self.bed_temp.get_style_context().add_class("main_temp_on")
-        else:
-            self.bed_temp.get_style_context().remove_class("main_temp_on")
-            self.bed_temp.get_style_context().add_class("main_temp_off")
-
-
-        if fs > 0:
-            self.fan_spd.get_style_context().remove_class("main_temp_off")
-            self.fan_spd.get_style_context().add_class("main_temp_on")
-        else:
-            self.fan_spd.get_style_context().remove_class("main_temp_on")
-            self.fan_spd.get_style_context().add_class("main_temp_off")
+        self.set_heating_color(self.ext_temp,ext_target)
+        self.set_heating_color(self.bed_temp,bed_target)
+        self.set_heating_color(self.fan_spd,fs)
 
         self.ext_temp.set_label(ext_label)
         self.bed_temp.set_label(bed_label)
@@ -114,20 +111,16 @@ class Panel(MenuPanel):
         self.fan_spd.set_label(fan_label)
         return
 
+
     def activate(self):
         if not self._printer.tempstore:
             self._screen.init_tempstore()
-        #self.update_graph_visibility()
 
     def deactivate(self):
-        #if self.graph_update is not None:
-        #    GLib.source_remove(self.graph_update)
-        #    self.graph_update = None
         if self.active_heater is not None:
             self.hide_numpad()
 
     def add_device(self, device):
-
         logging.info(f"Adding device: {device}")
 
         temperature = self._printer.get_stat(device, "temperature")
@@ -221,36 +214,6 @@ class Panel(MenuPanel):
 
         #self.update_graph_visibility()
 
-    def change_target_temp(self, temp):
-        name = self.active_heater.split()[1] if len(self.active_heater.split()) > 1 else self.active_heater
-        temp = self.verify_max_temp(temp)
-        if temp is False:
-            return
-
-        if self.active_heater.startswith('extruder'):
-            self._screen._ws.klippy.set_tool_temp(self._printer.get_tool_number(self.active_heater), temp)
-        elif self.active_heater == "heater_bed":
-            self._screen._ws.klippy.set_bed_temp(temp)
-        elif self.active_heater.startswith('heater_generic '):
-            self._screen._ws.klippy.set_heater_temp(name, temp)
-        elif self.active_heater.startswith('temperature_fan '):
-            self._screen._ws.klippy.set_temp_fan_temp(name, temp)
-        else:
-            logging.info(f"Unknown heater: {self.active_heater}")
-            self._screen.show_popup_message(_("Unknown Heater") + " " + self.active_heater)
-        self._printer.set_stat(name, {"target": temp})
-        if self.numpad_visible:
-            self.hide_numpad()
-
-    def verify_max_temp(self, temp):
-        temp = int(temp)
-        max_temp = int(float(self._printer.get_config_section(self.active_heater)['max_temp']))
-        logging.debug(f"{temp}/{max_temp}")
-        if temp > max_temp:
-            self._screen.show_popup_message(_("Can't set above the maximum:") + f' {max_temp}')
-            return False
-        return max(temp, 0)
-
     def pid_calibrate(self, temp):
         heater = self.active_heater.split(' ', maxsplit=1)[-1]
         if self.verify_max_temp(temp):
@@ -293,26 +256,6 @@ class Panel(MenuPanel):
 
         return self.left_panel
 
-    def hide_numpad(self, widget=None):
-        self.devices[self.active_heater]['name'].get_style_context().remove_class("button_active")
-        self.active_heater = None
-
-        if self._screen.vertical_mode:
-            #if not self._gtk.ultra_tall:
-                #self.update_graph_visibility(force_hide=False)
-            top = self.main_menu.get_child_at(0, 0)
-            bottom = self.main_menu.get_child_at(0, 2)
-            self.main_menu.remove(top)
-            self.main_menu.remove(bottom)
-            self.main_menu.attach(top, 0, 0, 1, 3)
-            self.main_menu.attach(self.labels["menu"], 0, 3, 1, 2)
-        else:
-            self.main_menu.remove_column(1)
-            self.main_menu.attach(self.labels["menu"], 1, 0, 1, 1)
-        self.main_menu.show_all()
-        self.numpad_visible = False
-        self._screen.base_panel.set_control_sensitive(False, control='back')
-
     def process_update(self, action, data):
         #if action != "notify_status_update":
         #    return
@@ -328,39 +271,71 @@ class Panel(MenuPanel):
             return
         self.update_top_panel()
 
+    def verify_value(self, temp,top):
+        temp = int(temp)
+        logging.debug(f"{temp}/{top}")
+        if temp > top:
+            self._screen.show_popup_message(_("Can't set above the maximum:") + f' {top}')
+            return False
+        return max(temp, 0)
+
+    def change_target_temp(self, temp):
+        if temp is False:
+            return
+
+        if self.active_heater == "ext":
+            self._screen._ws.klippy.set_tool_temp(0, self.verify_value(temp,500))
+        elif self.active_heater == "bed":
+            self._screen._ws.klippy.set_bed_temp(self.verify_value(temp,120))
+        elif self.active_heater == "fan":
+            self._screen._ws.klippy.gcode_script(f"M106 S{self.verify_value(temp,100) * 2.55:.0f}")
+        
+        #self._printer.set_stat(name, {"target": temp})
+        if self.numpad_visible:
+            self.hide_numpad()
+
+
     def show_numpad(self, widget, device):
+        if (device == "ext"):
+            self.set_active(self.ext_temp,True)
+            self.set_active(self.bed_temp,False)
+            self.set_active(self.fan_spd,False)
+        elif (device == "bed"):
+            self.set_active(self.ext_temp,False)
+            self.set_active(self.bed_temp,True)
+            self.set_active(self.fan_spd,False)
+        elif (device == "fan"):
+            self.set_active(self.ext_temp,False)
+            self.set_active(self.bed_temp,False)
+            self.set_active(self.fan_spd,True)
 
-        if self.active_heater is not None:
-            self.devices[self.active_heater]['name'].get_style_context().remove_class("button_active")
         self.active_heater = device
-        self.devices[self.active_heater]['name'].get_style_context().add_class("button_active")
 
-        if "keypad" not in self.labels:
-            self.labels["keypad"] = Keypad(self._screen, self.change_target_temp, self.pid_calibrate, self.hide_numpad)
-        can_pid = self._printer.state not in ("printing", "paused") \
-            and self._screen.printer.config[self.active_heater]['control'] == 'pid'
-        self.labels["keypad"].show_pid(can_pid)
+        self.labels["keypad"] = Keypad(self._screen, self.change_target_temp, self.pid_calibrate, self.hide_numpad)
         self.labels["keypad"].clear()
 
-        if self._screen.vertical_mode:
-            #if not self._gtk.ultra_tall:
-                #self.update_graph_visibility(force_hide=True)
-            top = self.main_menu.get_child_at(0, 0)
-            bottom = self.main_menu.get_child_at(0, 3)
-            self.main_menu.remove(top)
-            self.main_menu.remove(bottom)
-            self.main_menu.attach(top, 0, 0, 1, 2)
-            self.main_menu.attach(self.labels["keypad"], 0, 2, 1, 2)
-        else:
-            self.main_menu.remove_column(1)
-            self.main_menu.attach(self.labels["keypad"], 1, 0, 1, 1)
+        #self.main_menu.set_vexpand(False)
+        out = self.main_menu.get_child_at(0, 1)
+        self.main_menu.remove(out)
+        self.main_menu.attach(self.labels["keypad"], 0, 1, 4, 4)
         self.main_menu.show_all()
         self.numpad_visible = True
         self._screen.base_panel.set_control_sensitive(True, control='back')
 
-    #def update_graph(self):
-    #    self.labels['da'].queue_draw()
-    #    return True
+    def hide_numpad(self, widget=None):
+        self.set_active(self.ext_temp,False)
+        self.set_active(self.bed_temp,False)
+        self.set_active(self.fan_spd,False)
+        self.active_heater = None
+
+        out = self.main_menu.get_child_at(0, 1)
+        self.main_menu.remove(out)
+        self.main_menu.attach(self.labels['menu'], 0, 1, 4, 4)
+
+        #self.main_menu.show_all()
+        self.numpad_visible = False
+        self._screen.base_panel.set_control_sensitive(False, control='back')
+
 
     def back(self):
         if self.numpad_visible:
