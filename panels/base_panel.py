@@ -445,7 +445,7 @@ class BasePanel(ScreenPanel):
             self.sdbus_nm = None
 
         if (self.sdbus_nm != None):
-            if (self.ip == " "):
+            if (self.ip == " " or self.ip == "?"):
                 self.interface = self.sdbus_nm.get_primary_interface()
                 out = f"{self.sdbus_nm.get_ip_address()}"
                 if ("(eth0)" in out):
