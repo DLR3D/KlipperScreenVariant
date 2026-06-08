@@ -14,7 +14,7 @@ class Keypad(Gtk.Box):
         self.has_extra_button = False
 
         # Header: Entry + Close
-        self.entry = Gtk.Entry(hexpand=True, xalign=0.5, max_length=entry_max)
+        self.entry = Gtk.Entry(hexpand=True, xalign=0.5)#, max_length=entry_max)
         self.entry.connect("activate", self._on_keypad_clicked, "E")
 
         close_btn = self._gtk.Button('cancel', scale=.66)

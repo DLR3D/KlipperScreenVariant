@@ -341,10 +341,10 @@ class Panel(ScreenPanel):
 
         devname = device.split()[1] if len(device.split()) > 1 else device
         # Support for hiding devices by name
-        if devname.startswith("_"):
-            return False
-        if devname.lower() in self.hidden_sensors:
-            return False
+        #if devname.startswith("_"):
+        #    return False
+        #if devname.lower() in self.hidden_sensors:
+        #    return False
 
         if device.startswith("extruder"):
             if self._printer.extrudercount > 1:
