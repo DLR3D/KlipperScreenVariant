@@ -95,7 +95,7 @@ class Panel(MenuPanel):
             chamber_temp = self._printer.get_stat("temperature_sensor Chamber", "temperature")
             chamber_label = f" {int(round(chamber_temp))} °C"
         except:
-            chamber_temp = self._printer.get_stat("temperature_fan  Chamber", "temperature")
+            chamber_temp = self._printer.get_stat("temperature_fan Chamber", "temperature")
             chamber_label = f" {int(round(chamber_temp))} °C"
 
         fs = self._printer.get_fan_speed("fan")
