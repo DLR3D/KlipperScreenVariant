@@ -118,6 +118,15 @@ class SdbusNm:
             logging.exception(f"{e}")
             raise RuntimeError(f"{e}") from e
 
+    def check_if_ap_mode(self):
+        try:
+            status = subprocess.run('nmcli connection show --active Hotspot-1', shell=True, capture_output=True, text=True)
+            
+            if len(status.stdout) >1:
+                return True
+        except:
+            return False
+
     def is_wifi_enabled(self):
         return self.nm.wireless_enabled
 

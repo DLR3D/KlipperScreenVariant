@@ -106,10 +106,6 @@ class BasePanel(ScreenPanel):
 
         self.titlelbl = Gtk.Label(hexpand=True, halign=Gtk.Align.CENTER, ellipsize=Pango.EllipsizeMode.END)
 
-        #self.control['time'] = Gtk.Label(label="00:00 AM")
-        #self.control['time_box'] = Gtk.Box(halign=Gtk.Align.END)
-        #self.control['time_box'].pack_end(self.control['time'], True, True, 10)
-
         # IP
         self.update_ip()
 
@@ -123,7 +119,6 @@ class BasePanel(ScreenPanel):
         self.titlebar.add(self.control['temp_box'])
         self.titlebar.add(self.titlelbl)
         self.titlebar.add(self.control['ip_box'])
-        #self.titlebar.add(self.control['time_box'])
         self.set_title(title)
 
         # Main layout
@@ -162,9 +157,8 @@ class BasePanel(ScreenPanel):
             self.control['temp_box'].remove(child)
         if self._printer is None or not show:
             return
-
         try:
-            devices = ['extruder','heater_bed','temperature_fan Chamber']
+            devices = self._printer.get_temp_devices()
             if not devices:
                 return
             img_size = self._gtk.img_scale * self.bts
@@ -175,62 +169,46 @@ class BasePanel(ScreenPanel):
                 if icon is not None:
                     self.labels[f'{device}_box'].pack_start(icon, False, False, 3)
                 self.labels[f'{device}_box'].pack_start(self.labels[device], False, False, 0)
-                self.control['temp_box'].add(self.labels[f"{device}_box"])
+
+            # Limit the number of items according to resolution
+            nlimit = int(round(log(self._screen.width, 10) * 5 - 10.5))
+            n = 0
+            if len(self._printer.get_tools()) > (nlimit - 1):
+                self.current_extruder = self._printer.get_stat("toolhead", "extruder")
+                if self.current_extruder and f"{self.current_extruder}_box" in self.labels:
+                    self.control['temp_box'].add(self.labels[f"{self.current_extruder}_box"])
+            else:
+                self.current_extruder = False
+            for device in devices:
+                if n >= nlimit:
+                    break
+                if device.startswith("extruder") and self.current_extruder is False:
+                    self.control['temp_box'].add(self.labels[f"{device}_box"])
+                    n += 1
+                elif device.startswith("heater"):
+                    self.control['temp_box'].add(self.labels[f"{device}_box"])
+                    n += 1
+                elif device.startswith("temperature_fan"):
+                    self.control['temp_box'].add(self.labels[f"{device}_box"])
+                    n += 1
+            # Filter out all other devices
+                #elif device.startswith("temperature_sensor"):
+                #    self.control['temp_box'].add(self.labels[f"{device}_box"])
+                #    n += 1
+            # for device in devices:
+                #Users can fill the bar if they want
+                # if n >= nlimit + 1:
+                    # break
+                # name = device.split()[1] if len(device.split()) > 1 else device
+                # for item in self.titlebar_items:
+                    # if name == item:
+                        # self.control['temp_box'].add(self.labels[f"{device}_box"])
+                        # n += 1
+                        # break
+
             self.control['temp_box'].show_all()
         except Exception as e:
             logging.debug(f"Couldn't create heaters box: {e}")
-
-        #try:
-        #    devices = ['extruder','heater_bed','temperature_fan Chamber']# self._printer.get_temp_devices() #
-        #    #print(devices)
-        #    if not devices:
-        #        return
-        #    img_size = self._gtk.img_scale * self.bts
-        #    for device in devices:
-        #        self.labels[device] = Gtk.Label(ellipsize=Pango.EllipsizeMode.START)
-        #        self.labels[f'{device}_box'] = Gtk.Box()
-        #        icon = self.get_icon(device, img_size)
-        #        if icon is not None:
-        #            self.labels[f'{device}_box'].pack_start(icon, False, False, 3)
-        #        self.labels[f'{device}_box'].pack_start(self.labels[device], False, False, 0)
-#
-        #    # Limit the number of items according to resolution
-        #    nlimit = int(round(log(self._screen.width, 10) * 5 - 10.5))
-        #    n = 0
-        #    if len(self._printer.get_tools()) > (nlimit - 1):
-        #        self.current_extruder = self._printer.get_stat("toolhead", "extruder")
-        #        if self.current_extruder and f"{self.current_extruder}_box" in self.labels:
-        #            self.control['temp_box'].add(self.labels[f"{self.current_extruder}_box"])
-        #    else:
-        #        self.current_extruder = False
-        #    for device in devices:
-        #        if n >= nlimit:
-        #            break
-        #        #if device.startswith("extruder") and self.current_extruder is False:
-        #        #    self.control['temp_box'].add(self.labels[f"{device}_box"])
-        #        #    n += 1
-        #        #elif device.startswith("heater"):
-        #        #    self.control['temp_box'].add(self.labels[f"{device}_box"])
-        #        #    n += 1
-        #        #elif device.startswith("temperature_sensor"):
-        #        #    self.control['temp_box'].add(self.labels[f"{device}_box"])
-        #        #    n += 1
-#
-        #        self.control['temp_box'].add(self.labels[f"{device}_box"])
-        #    for device in devices:
-        #        # Users can fill the bar if they want
-        #        if n >= nlimit + 1:
-        #            break
-        #        name = device.split()[1] if len(device.split()) > 1 else device
-        #        for item in self.titlebar_items:
-        #            if name == item:
-        #                self.control['temp_box'].add(self.labels[f"{device}_box"])
-        #                n += 1
-        #                break
-#
-        #    self.control['temp_box'].show_all()
-        #except Exception as e:
-        #    logging.debug(f"Couldn't create heaters box: {e}")
 
     def get_icon(self, device, img_size):
         if device.startswith("extruder"):
@@ -273,6 +251,7 @@ class BasePanel(ScreenPanel):
         self.current_panel = panel
         self.set_title(panel.title)
         self.content.add(panel.content)
+        self.update_ip()
 
     def back(self, widget=None):
         if self.current_panel is None:
@@ -352,6 +331,13 @@ class BasePanel(ScreenPanel):
             self.control['temp_box'].pack_start(self.labels[f"{self.current_extruder}_box"], True, True, 3)
             self.control['temp_box'].reorder_child(self.labels[f"{self.current_extruder}_box"], 0)
             self.control['temp_box'].show_all()
+
+        # Manage IP updates
+        self.control['ip_box'].remove(self.control['ip'])
+        self.update_ip()
+        self.control['ip'] = Gtk.Label(label=self.ip)
+        self.control['ip_box'].pack_end(self.control['ip'], True, True, 10)
+        self.control['ip_box'].show_all()
 
         return False
 
@@ -442,25 +428,25 @@ class BasePanel(ScreenPanel):
         self._screen._menu_go_back(home=True)
 
     def update_ip(self):
-        #self.ip = self.get_ip()
-        #self.control['ip'].set_text(self.ip)
-        #return True
-
         try:
             self.sdbus_nm = SdbusNm(self.popup_callback)
         except Exception as e:
             self.sdbus_nm = None
 
         if (self.sdbus_nm != None):
-            if (self.ip == " " or self.ip == "?"):
+            # Check for AP
+            if (self.sdbus_nm.check_if_ap_mode()):
+                self.ip = str("AP Mode: 10.42.0.1") 
+            else:
                 self.interface = self.sdbus_nm.get_primary_interface()
                 out = f"{self.sdbus_nm.get_ip_address()}"
-                if ("(eth0)" in out):
-                    out = "Ethernet IP: "+ out.strip(" (eth0)")
+                #self.ip = "Wifi IP: "+ out
+                if "?" in out:
+                    self.ip = "Aquiring IP"
                 else:
-                    out = "Wifi IP: "+ out
-                self.ip = out        
-            else:
-                self.ip =(f"Aquiring IP")
+                    if ("(eth0)" in out):
+                        self.ip = "Ethernet IP: "+ out.strip(" (eth0)")
+                    else:
+                        self.ip = "Wifi IP: "+ out
 
         return True
