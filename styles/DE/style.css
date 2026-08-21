@@ -248,10 +248,10 @@ textview .time {
     background-color: #090909;
 }
 
-.temp_on {background-color: #3f2c2c;}
+.temp_on {background-color: #003049;}
 .temp_off {background-color: #424242;}
 .select {background-color: #949494;}
 
-.temp_on:active {background-color: #BC9F9F;}
+.temp_on:active {background-color: #BDD5EA;}
 .temp_off:active {background-color: #969696;}
 .select:active {background-color: #DBDBDB;}

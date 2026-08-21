@@ -30,7 +30,7 @@ class Panel(MenuPanel):
         # rather than in create_top_panel so they can be seen by the update routine
         self.ext_temp = self._gtk.Button('extruder', "°C", "colorless", self.bts * 1.5, Gtk.PositionType.LEFT, 1)
         self.bed_temp = self._gtk.Button('bed', "°C", "colorless", self.bts * 1.3, Gtk.PositionType.LEFT, 1)
-        self.chamber_temp = self._gtk.Button('printer', "°C", "colorless", self.bts * 1.5, Gtk.PositionType.LEFT, 1)
+        #self.chamber_temp = self._gtk.Button('printer', "°C", "colorless", self.bts * 1.5, Gtk.PositionType.LEFT, 1)
         self.fan_spd = self._gtk.Button('fan', "%", "colorless", self.bts * 1.5, Gtk.PositionType.LEFT, 1)
         self.top_panel = self.create_top_panel()
         self.main_menu.attach(self.top_panel, 0, 0, 4, 1)
@@ -50,7 +50,7 @@ class Panel(MenuPanel):
 
         self.ext_temp.get_style_context().add_class("temp_off")
         self.bed_temp.get_style_context().add_class("temp_off")
-        self.chamber_temp.get_style_context().add_class("temp_off")
+        #self.chamber_temp.get_style_context().add_class("temp_off")
         self.fan_spd.get_style_context().add_class("temp_off")
 
         top = Gtk.Grid(row_homogeneous=True, column_homogeneous=True)
@@ -59,7 +59,7 @@ class Panel(MenuPanel):
         top.set_margin_bottom(10)
         top.attach(self.ext_temp, 0, 0, 1, 1)
         top.attach(self.bed_temp, 1, 0, 1, 1)
-        top.attach(self.chamber_temp, 2, 0, 1, 1)
+        #top.attach(self.chamber_temp, 2, 0, 1, 1)
         top.attach(self.fan_spd, 3, 0, 1, 1)
 
         return top
@@ -91,12 +91,12 @@ class Panel(MenuPanel):
         bed_target = self._printer.get_stat("heater_bed", "target")
         bed_label = f" {int(round(bed_temp))} / {int(round(bed_target))}°C"
 
-        try:
-            chamber_temp = self._printer.get_stat("temperature_sensor Chamber", "temperature")
-            chamber_label = f" {int(round(chamber_temp))} °C"
-        except:
-            chamber_temp = self._printer.get_stat("temperature_fan Chamber", "temperature")
-            chamber_label = f" {int(round(chamber_temp))} °C"
+        #try:
+        #    chamber_temp = self._printer.get_stat("temperature_sensor Chamber", "temperature")
+        #    chamber_label = f" {int(round(chamber_temp))} °C"
+        #except:
+        #    chamber_temp = self._printer.get_stat("temperature_fan Chamber", "temperature")
+        #    chamber_label = f" {int(round(chamber_temp))} °C"
 
         fs = self._printer.get_fan_speed("fan")
         fan_label = f" {float(fs) * 100:.0f}%"
@@ -107,7 +107,7 @@ class Panel(MenuPanel):
 
         self.ext_temp.set_label(ext_label)
         self.bed_temp.set_label(bed_label)
-        self.chamber_temp.set_label(chamber_label)
+        #self.chamber_temp.set_label(chamber_label)
         self.fan_spd.set_label(fan_label)
         return
 
