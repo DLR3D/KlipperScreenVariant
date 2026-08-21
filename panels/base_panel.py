@@ -214,6 +214,7 @@ class BasePanel(ScreenPanel):
         if device.startswith("extruder"):
             if self._printer.extrudercount > 1:
                 if device == "extruder":
+                    return self._gtk.Image(f"extruder", img_size, img_size)
                     device = "extruder0"
                 return self._gtk.Image(f"extruder-{device[8:]}", img_size, img_size)
             return self._gtk.Image("extruder", img_size, img_size)
