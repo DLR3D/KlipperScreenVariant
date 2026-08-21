@@ -320,7 +320,7 @@ class Panel(ScreenPanel):
 
         buttons = [
             {"name": _("Delete"), "response": Gtk.ResponseType.REJECT, "style": 'dialog-error'},
-            {"name": _("Cancel"), "response": Gtk.ResponseType.CANCEL, "style": 'dialog-secondary'},
+            {"name": _("Back"), "response": Gtk.ResponseType.CANCEL, "style": 'dialog-secondary'},
             {"name": action, "response": Gtk.ResponseType.OK, "style": 'dialog-primary'}
         ]
 
