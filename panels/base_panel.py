@@ -437,7 +437,7 @@ class BasePanel(ScreenPanel):
         if (self.sdbus_nm != None):
             # Check for AP
             if (self.sdbus_nm.check_if_ap_mode()):
-                self.ip = str("AP Mode: 10.42.0.1") 
+                self.ip = str("Access IP: 10.42.0.1") 
             else:
                 self.interface = self.sdbus_nm.get_primary_interface()
                 out = f"{self.sdbus_nm.get_ip_address()}"
@@ -448,6 +448,6 @@ class BasePanel(ScreenPanel):
                     if ("(eth0)" in out):
                         self.ip = "Ethernet IP: "+ out.strip(" (eth0)")
                     else:
-                        self.ip = "Wifi IP: "+ out
+                        self.ip = "Wi-Fi IP: "+ out
 
         return True
