@@ -68,7 +68,7 @@ class Panel(ScreenPanel):
         self._screen._ws.klippy.gcode_script(f"M104 S0")
 
     def park(self,widget):
-        self._screen._ws.klippy.gcode_script(f"WIPE_NOZZLE_PARK")
+        self._screen._ws.klippy.gcode_script(f"_WIPE_NOZZLE_PARK")
 
     def create_mid_panel(self):
         self.preheat_grid = Gtk.Grid(
@@ -77,7 +77,7 @@ class Panel(ScreenPanel):
         i = 0
         for option in self.preheat_options:
             if option != "cooldown":
-                temp = self.preheat_options[option]["extruder"]
+                temp = self.preheat_options[option]["load"]
                 name = f"{option} {int(temp)}ºC"
                 self.labels[option] = self._gtk.Button(
                     label=name, style=f"color{(i % 4) + 1}"
