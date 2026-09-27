@@ -18,8 +18,8 @@ class Panel(ScreenPanel):
         super().__init__(screen, title)
         self.current_extruder = self._printer.get_stat("toolhead", "extruder")
         macros = self._printer.get_config_section_list("gcode_macro ")
-        self.load_filament = any("LOAD_FILAMENT" in macro.upper() for macro in macros)
-        self.unload_filament = any("UNLOAD_FILAMENT" in macro.upper() for macro in macros)
+        self.load_filament = any("_LOAD_FILAMENT" in macro.upper() for macro in macros)
+        self.unload_filament = any("_UNLOAD_FILAMENT" in macro.upper() for macro in macros)
 
         self.speeds = ['1', '2', '5', '25']
         self.distances = ['5', '10', '15', '25']
