@@ -302,16 +302,16 @@ class Panel(ScreenPanel):
     def load_unload(self, widget, direction):
         if direction == "-":
             if not self.unload_filament:
-                self._screen.show_popup_message("Macro UNLOAD_FILAMENT not found")
+                self._screen.show_popup_message("Macro _UNLOAD_FILAMENT not found")
             else:
                 self._screen._send_action(widget, "printer.gcode.script",
-                                          {"script": f"UNLOAD_FILAMENT SPEED={self.speed * 60}"})
+                                          {"script": f"_UNLOAD_FILAMENT"})
         if direction == "+":
             if not self.load_filament:
-                self._screen.show_popup_message("Macro LOAD_FILAMENT not found")
+                self._screen.show_popup_message("Macro _LOAD_FILAMENT not found")
             else:
                 self._screen._send_action(widget, "printer.gcode.script",
-                                          {"script": f"LOAD_FILAMENT SPEED={self.speed * 60}"})
+                                          {"script": f"_LOAD_FILAMENT"})
 
     def enable_disable_fs(self, switch, gparams, name, x):
         if switch.get_active():
